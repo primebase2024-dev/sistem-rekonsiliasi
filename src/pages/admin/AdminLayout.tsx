@@ -11,6 +11,7 @@ export function AdminLayout() {
     { name: 'Kelola Pekan', path: '/admin/pekan' },
     { name: 'Kelola Sesi', path: '/admin/sesi' },
     { name: 'Kelola Ruang', path: '/admin/ruang' },
+	{ name: 'Kelola Petugas', path: '/admin/petugas' },
   ]
 
   async function handleLogout() {

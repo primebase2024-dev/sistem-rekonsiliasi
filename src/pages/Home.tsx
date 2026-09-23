@@ -11,7 +11,7 @@ export function Home() {
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-white">Sistem Antrian Rekonsiliasi</h1>
-            <p className="text-white/80 text-sm">Paroki {profile?.full_name || 'Guest'}</p>
+            <p className="text-white/80 text-sm">Selamat datang, {profile?.full_name || 'Guest'}</p>
           </div>
           <button
             onClick={() => signOut()}
@@ -27,10 +27,10 @@ export function Home() {
         <div className="max-w-4xl w-full">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Selamat Datang
+              Pilih Portal Akses
             </h2>
             <p className="text-xl text-white/80">
-              Silakan pilih portal akses sesuai peran Anda
+              Silakan masuk sesuai peran Anda
             </p>
           </div>
 
@@ -41,7 +41,7 @@ export function Home() {
               to="/admin/pekan"
               className="group bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/30 rounded-2xl p-8 transition-all hover:scale-105 hover:shadow-2xl"
             >
-              <div className="text-5xl mb-4">⚙️</div>
+              <div className="text-5xl mb-4">️</div>
               <h3 className="text-2xl font-bold text-white mb-2">Admin Portal</h3>
               <p className="text-white/70">
                 Kelola Pekan, Sesi, Ruang, dan Transfer Antrian
@@ -71,7 +71,7 @@ export function Home() {
               to="/ruang"
               className="group bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/30 rounded-2xl p-8 transition-all hover:scale-105 hover:shadow-2xl"
             >
-              <div className="text-5xl mb-4"></div>
+              <div className="text-5xl mb-4">🛐</div>
               <h3 className="text-2xl font-bold text-white mb-2">Petugas Ruang</h3>
               <p className="text-white/70">
                 Kelola antrian ruang pengakuan dan pelayanan
@@ -86,7 +86,7 @@ export function Home() {
               to="/display"
               className="group bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/30 rounded-2xl p-8 transition-all hover:scale-105 hover:shadow-2xl"
             >
-              <div className="text-5xl mb-4"></div>
+              <div className="text-5xl mb-4">📺</div>
               <h3 className="text-2xl font-bold text-white mb-2">Display TV</h3>
               <p className="text-white/70">
                 Tampilan layar untuk jemaat (realtime)
@@ -100,7 +100,6 @@ export function Home() {
           {/* Info Footer */}
           <div className="mt-12 text-center text-white/60 text-sm">
             <p>Sistem Antrian Rekonsiliasi © {new Date().getFullYear()}</p>
-            <p className="mt-1">Paroki {profile?.tenant_id ? '- Multi Tenant Enabled' : ''}</p>
           </div>
         </div>
       </main>
