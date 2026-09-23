@@ -19,6 +19,7 @@ import { SesiList } from './pages/admin/SesiList'
 import { RuangList } from './pages/admin/RuangList'
 // Halaman PintuDashboard
 import { PintuDashboard } from './pages/pintu/PintuDashboard'
+import { Home } from './pages/Home'
 
 function App() {
   const { user, loading } = useAuth()
