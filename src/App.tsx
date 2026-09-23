@@ -119,6 +119,7 @@ function App() {
       {/* 4. Redirects & 404 */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<NotFound />} />
+	  <Route path="/" element={<Home />} />
     </Routes>
   )
 }
