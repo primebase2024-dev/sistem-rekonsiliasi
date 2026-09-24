@@ -14,8 +14,9 @@ interface Pekan {
 }
 
 export function PekanList() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth() 
   const navigate = useNavigate()
+  const [namaParokiOtomatis, setNamaParokiOtomatis] = useState('Memuat...')
   const [pekanList, setPekanList] = useState<Pekan[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -31,7 +32,19 @@ export function PekanList() {
   useEffect(() => {
     fetchPekan()
   }, [])
-
+  
+  useEffect(() => {
+    if (profile?.tenant_id) {
+      supabase
+        .from('tenants')
+        .select('nama_paroki')
+        .eq('id', profile.tenant_id)
+        .single()
+        .then(({ data }) => {
+          if (data) setNamaParokiOtomatis(data.nama_paroki)
+        })
+    }
+  }, [profile])
   async function fetchPekan() {
     setLoading(true)
     const { data, error } = await supabase
@@ -111,13 +124,13 @@ export function PekanList() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nama Paroki</label>
               <input
-                required
                 type="text"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                placeholder="Contoh: Paroki Santo Yosef"
-                value={formData.nama_paroki}
-                onChange={e => setFormData({...formData, nama_paroki: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-600 cursor-not-allowed"
+                value={namaParokiOtomatis}
+                disabled
+                title="Nama paroki otomatis terisi sesuai akun Anda"
               />
+              <p className="text-xs text-gray-500 mt-1">*Otomatis terisi berdasarkan paroki Anda</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

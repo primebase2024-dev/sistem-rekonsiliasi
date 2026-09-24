@@ -6,14 +6,19 @@ export function AdminLayout() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const navItems = [
+  const baseNavItems = [
     { name: 'Dashboard', path: '/admin' },
     { name: 'Kelola Pekan', path: '/admin/pekan' },
     { name: 'Kelola Sesi', path: '/admin/sesi' },
     { name: 'Kelola Ruang', path: '/admin/ruang' },
+	{ name: 'Kelola User', path: '/admin/user' },
 	{ name: 'Kelola Petugas', path: '/admin/petugas' },
   ]
-
+  // Tambahkan menu "Kelola Paroki" HANYA jika role-nya ADMINISTRATOR
+  const navItems = profile?.role === 'ADMINISTRATOR' 
+    ? [{ name: 'Kelola Paroki', path: '/admin/paroki' }, ...baseNavItems]
+    : baseNavItems
+	
   async function handleLogout() {
     await signOut()
     navigate('/login')

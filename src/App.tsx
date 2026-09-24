@@ -1,6 +1,11 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { ProtectedRoute } from './ProtectedRoute'
+// Administrator
+import { TenantList } from './pages/admin/TenantList'
+// User Management
+import { UserManagement } from './pages/admin/UserManagement'
+import { Register } from './pages/Register'
 
 // Public Pages
 import { Login } from './pages/Login'
@@ -42,12 +47,14 @@ function App() {
 
       {/* 3. Display (Bisa diakses tanpa login untuk TV) */}
       <Route path="/display" element={<Display />} />
+      {/* Register User */}
+      <Route path="/register" element={<Register />} />
 
       {/* 4. Protected Admin Routes (Nested) */}
       <Route
         path="/admin"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'ADMINISTRATOR']}>
             <AdminLayout />
           </ProtectedRoute>
         }
@@ -57,9 +64,11 @@ function App() {
             Selamat datang di Dashboard Admin. Pilih menu di samping.
           </div>
         } />
+        <Route path="paroki" element={<TenantList />} /> 
         <Route path="pekan" element={<PekanList />} />
         <Route path="sesi" element={<SesiList />} />
         <Route path="ruang" element={<RuangList />} />
+		<Route path="user" element={<UserManagement />} />
         <Route path="petugas" element={<PetugasSesiList />} />
       </Route>
 
@@ -72,6 +81,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+	  
       <Route
         path="/ruang"
         element={
