@@ -226,7 +226,7 @@ export function RuangDashboard() {
 
   async function handleLogout() { 
     await signOut()
-    navigate('/login') 
+    navigate('/') 
   }
   
   const formatNomor = (nomor: number) => `#${nomor.toString().padStart(3, '0')}`

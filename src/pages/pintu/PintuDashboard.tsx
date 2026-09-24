@@ -89,7 +89,7 @@ export function PintuDashboard() {
 
   async function handleLogout() {
     await signOut()
-    navigate('/login')
+    navigate('/')
   }
 
   // Format nomor dengan leading zero (misal: 1 -> #001)

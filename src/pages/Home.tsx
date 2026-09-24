@@ -1,15 +1,16 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
 export function Home() {
-  const { profile, signOut } = useAuth()
-  const navigate = useNavigate()
-  
+  const { user, profile, signOut } = useAuth()
   const [passwordForm, setPasswordForm] = useState({ newPass: '', confirmPass: '' })
   const [passLoading, setPassLoading] = useState(false)
   const [passMessage, setPassMessage] = useState('')
+
+  // Jika user baru saja login via magic link, kita bisa cek apakah mereka perlu set password
+  // (Untuk simplifikasi, kita tampilkan form ini jika user sudah login)
 
   async function handleUpdatePassword(e: FormEvent) {
     e.preventDefault()
@@ -38,9 +39,50 @@ export function Home() {
 
   async function handleLogout() {
     await signOut()
-    navigate('/login')
+    //navigate('/login')
   }
 
+  // --- KONDISI 1: USER BELUM LOGIN (Tampilan Publik) ---
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-2xl w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-10 shadow-2xl">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            Sistem Antrian Rekonsiliasi
+          </h1>
+          <p className="text-xl text-white/80 mb-8">
+            Fratres sororesque a Deo dilecti, SAR ini dibangun untuk membantu pelayanan Sakramen Rekonsiliasi di paroki menjadi lebih tertib, nyaman, dan terorganisir.
+          </p>
+          
+          {/* Hanya ada satu tombol utama: Masuk */}
+          <div className="flex justify-center">
+            <Link 
+              to="/login" 
+              className="bg-white text-indigo-700 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition shadow-lg text-lg"
+            >
+              Masuk ke Sistem
+            </Link>
+          </div>
+
+          <div className="mt-8 text-white/60 text-sm space-y-1">
+            <p>Sudah mendapat undangan dari Administrator Paroki Harapan Indah?</p>
+            <p>
+              Silakan login, lalu atur password Anda melalui menu di dashboard.
+            </p>
+            <p>
+              Selamat melayani. Benedicti a Domino.
+            </p>
+          </div>
+        </div>
+        
+        <div className="absolute bottom-6 text-white/40 text-xs">
+          &copy; {new Date().getFullYear()} Sistem Antrian Rekonsiliasi. Dibuat untuk pelayanan Gereja.
+        </div>
+      </div>
+    )
+  }
+
+  // --- KONDISI 2: USER SUDAH LOGIN (Tampilan Dashboard Portal) ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 flex flex-col">
       {/* Header */}
@@ -66,10 +108,10 @@ export function Home() {
           {/* Kartu Atur Password (Hanya muncul jika user baru login via invite) */}
           <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border-l-4 border-yellow-400">
             <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
-              🔐 Langkah Terakhir: Atur Password Anda
+              🔐 Atur Password Anda
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Akun Anda sudah aktif. Silakan buat password agar Anda bisa login secara manual di lain waktu tanpa link email.
+              Akun Anda sudah aktif. Silakan buat password agar Anda bisa login secara manual di lain waktu.
             </p>
             
             {passMessage && (
