@@ -226,8 +226,8 @@ export function SesiList() {
       )}
 	<div className="w-full overflow-x-auto pb-4">
       {/* Tabel Daftar Sesi */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table className="min-w-[600px]divide-y divide-gray-200">
+	  <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <table className="min-w-[600px] divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hari / Tanggal</th>
