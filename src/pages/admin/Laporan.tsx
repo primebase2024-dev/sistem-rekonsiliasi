@@ -250,11 +250,12 @@ export function Laporan() {
           </div>
 
           {/* REKAPITULASI PER SESI */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+		<div className="w-full overflow-x-auto pb-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
               <h3 className="text-lg font-semibold text-gray-900"> Rekapitulasi per Sesi</h3>
             </div>
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-[600px] divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Sesi</th>
@@ -277,13 +278,15 @@ export function Laporan() {
               </tbody>
             </table>
           </div>
-
+		</div>
+		
+		<div className="w-full overflow-x-auto pb-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
                 <h3 className="text-lg font-semibold text-gray-900">📅 Dilayani per Tanggal</h3>
               </div>
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-[600px] divide-y divide-gray-200">
                 <tbody className="bg-white divide-y divide-gray-200">
                   {rekap.perTanggal.length === 0 ? <tr><td className="px-6 py-4 text-center text-gray-500">Belum ada jemaat yang selesai dilayani</td></tr> : 
                     rekap.perTanggal.map((item, idx) => (
@@ -296,12 +299,13 @@ export function Laporan() {
                 </tbody>
               </table>
             </div>
-
+		</div>
+		<div className="w-full overflow-x-auto pb-4">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
                 <h3 className="text-lg font-semibold text-gray-900">✝️ Dilayani per Romo</h3>
               </div>
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-[600px] divide-y divide-gray-200">
                 <tbody className="bg-white divide-y divide-gray-200">
                   {rekap.perRomo.length === 0 ? <tr><td className="px-6 py-4 text-center text-gray-500">Belum ada data Romo</td></tr> : 
                     rekap.perRomo.map((item, idx) => (
@@ -314,6 +318,7 @@ export function Laporan() {
                 </tbody>
               </table>
             </div>
+		</div>
           </div>
         </>
       )}
