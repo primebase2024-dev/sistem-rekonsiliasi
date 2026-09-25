@@ -16,9 +16,10 @@ export function AdminLayout() {
   ]
   // Tambahkan menu "Kelola Paroki" HANYA jika role-nya ADMINISTRATOR
   const navItems = profile?.role === 'ADMINISTRATOR' 
-    ? [{ name: 'Kelola Paroki', path: '/admin/paroki' }, ...baseNavItems]
-    : baseNavItems
-	
+    ? [{ name: 'Kelola Paroki', path: '/admin/paroki' }, 
+	{ name: 'Laporan', path: '/admin/laporan' },
+	{ name: 'Backup Data', path: '/admin/backup' }, ...baseNavItems]
+	: baseNavItems
   async function handleLogout() {
     await signOut()
     navigate('/')

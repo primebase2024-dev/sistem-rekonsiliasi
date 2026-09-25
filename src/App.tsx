@@ -3,6 +3,9 @@ import { useAuth } from './contexts/AuthContext'
 import { ProtectedRoute } from './ProtectedRoute'
 // Administrator
 import { TenantList } from './pages/admin/TenantList'
+import { Laporan } from './pages/admin/Laporan'
+import { BackupData } from './pages/admin/BackupData'
+
 // User Management
 import { UserManagement } from './pages/admin/UserManagement'
 import { Register } from './pages/Register'
@@ -65,6 +68,8 @@ function App() {
           </div>
         } />
         <Route path="paroki" element={<TenantList />} /> 
+		<Route path="laporan" element={<Laporan />} />
+		<Route path="backup" element={<BackupData />} />
         <Route path="pekan" element={<PekanList />} />
         <Route path="sesi" element={<SesiList />} />
         <Route path="ruang" element={<RuangList />} />

@@ -1,0 +1,1 @@
+supabase db dump -f backup_full_sistem.sql --schema public --schema auth
