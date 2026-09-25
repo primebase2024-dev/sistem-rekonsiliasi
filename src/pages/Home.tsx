@@ -9,7 +9,7 @@ export function Home() {
   // Jika user baru saja login via magic link, kita bisa cek apakah mereka perlu set password
   // (Untuk simplifikasi, kita tampilkan form ini jika user sudah login)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
-  const [showInstallBtn, setShowInstallBtn] = useState(true)
+  const [showInstallBtn, setShowInstallBtn] = useState(false)
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -57,32 +57,27 @@ export function Home() {
   async function handleInstall() {
     console.log("Tombol Install diklik. deferredPrompt ada?", !!deferredPrompt)
     
-    if (!deferredPrompt) {
-      console.warn("Gagal: deferredPrompt tidak ditemukan.")
-      alert("Tidak dapat menginstall. \n\n1. Pastikan Anda TIDAK menggunakan mode Incognito.\n2. Aplikasi mungkin sudah terinstall.\n3. Coba refresh halaman dan klik lagi.")
-      return
-    }
-
-    try {
-      // 1. Munculkan prompt native browser
-      deferredPrompt.prompt()
-      
-      // 2. Tunggu respon user
-      const { outcome } = await deferredPrompt.userChoice
-      console.log(`Respon user terhadap install: ${outcome}`)
-      
-      if (outcome === 'accepted') {
-        console.log("User menerima install!")
-        setShowInstallBtn(false)
-      } else {
-        console.log("User menolak install.")
+    if (deferredPrompt) {
+      // Jika browser mendukung event install otomatis (Chrome Android/Desktop)
+      try {
+        deferredPrompt.prompt()
+        const { outcome } = await deferredPrompt.userChoice
+        if (outcome === 'accepted') {
+          setShowInstallBtn(false)
+        }
+        setDeferredPrompt(null)
+      } catch (err) {
+        console.error("Error saat install:", err)
       }
+    } else {
+      // Jika browser TIDAK mendukung event otomatis (Safari / Chrome Desktop tertentu)
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
       
-      // 3. Bersihkan prompt setelah digunakan (hanya bisa dipakai 1x)
-      setDeferredPrompt(null)
-    } catch (err) {
-      console.error("Error saat memunculkan prompt install:", err)
-      alert("Terjadi kesalahan saat mencoba menginstall aplikasi.")
+      if (isSafari) {
+        alert("📱 Cara Install di iPhone (Safari):\n\n1. Ketuk tombol 'Share' (ikon kotak dengan panah ke atas) di bagian bawah browser.\n2. Gulir ke bawah dan pilih 'Add to Home Screen' (Tambah ke Layar Utama).\n3. Ketuk 'Add' (Tambah).")
+      } else {
+        alert("💻 Cara Install di Desktop / Android:\n\n1. Lihat di pojok kanan atas address bar (bilah alamat URL).\n2. Cari ikon 'Install' (gambar layar komputer/HP dengan panah ke bawah ⬇️).\n3. Klik ikon tersebut, lalu pilih 'Install'.\n\n*Atau, jika di Android, banner 'Add to Home Screen' mungkin muncul otomatis di bagian bawah layar.*")
+      }
     }
   }
   
