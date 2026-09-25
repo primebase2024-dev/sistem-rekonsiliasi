@@ -144,7 +144,7 @@ export function RuangList() {
 		  }}
 		  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition"
 		>
-		  ?? Refresh Data
+		  🔄 Refresh Data
 		</button>
 		<button
 		  onClick={() => {
