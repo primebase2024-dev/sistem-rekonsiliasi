@@ -166,10 +166,10 @@ export function PekanList() {
         </form>
       )}
 
-	{/* LAPISAN 1: Wrapper untuk Scroll Horizontal */}
-	<div className="w-full overflow-x-auto pb-4">	  
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+	<div className="w-full overflow-x-auto pb-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        {/* KUNCI RAHASIA: Tambahkan min-w-[600px] agar tabel memaksa scroll di HP */}
+        <table className="min-w-[600px] divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
