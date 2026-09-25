@@ -1,16 +1,28 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
 export function Home() {
   const { user, profile, signOut } = useAuth()
-  const [passwordForm, setPasswordForm] = useState({ newPass: '', confirmPass: '' })
-  const [passLoading, setPassLoading] = useState(false)
-  const [passMessage, setPassMessage] = useState('')
 
   // Jika user baru saja login via magic link, kita bisa cek apakah mereka perlu set password
   // (Untuk simplifikasi, kita tampilkan form ini jika user sudah login)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [showInstallBtn, setShowInstallBtn] = useState(true)
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+      setShowInstallBtn(true)
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+  const [passwordForm, setPasswordForm] = useState({ newPass: '', confirmPass: '' })
+  const [passLoading, setPassLoading] = useState(false)
+  const [passMessage, setPassMessage] = useState('')
 
   async function handleUpdatePassword(e: FormEvent) {
     e.preventDefault()
@@ -41,7 +53,16 @@ export function Home() {
     await signOut()
     //navigate('/login')
   }
-
+  async function handleInstall() {
+    if (!deferredPrompt) return
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    if (outcome === 'accepted') {
+      setShowInstallBtn(false)
+    }
+    setDeferredPrompt(null)
+  }
+  
   // --- KONDISI 1: USER BELUM LOGIN (Tampilan Publik) ---
   if (!user) {
     return (
@@ -98,13 +119,31 @@ export function Home() {
           >
             Logout
           </button>
+
         </div>
       </header>
+	   {/* Tombol Install PWA */}
+	  {showInstallBtn && (
+		<div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+		  <div className="flex items-center justify-between">
+			<div>
+			  <p className="font-bold text-yellow-800">📱 Install Aplikasi SAR</p>
+			  <p className="text-sm text-yellow-700">Pasang di HP Anda untuk akses cepat seperti aplikasi biasa.</p>
+			</div>
+			<button
+			  onClick={handleInstall}
+			  className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold px-4 py-2 rounded-lg transition whitespace-nowrap ml-4"
+			>
+			  Install
+			</button>
+		  </div>
+		</div>
+	  )}    
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center p-6">
-        <div className="max-w-4xl w-full space-y-8">
-          
+	  <div className="max-w-4xl w-full space-y-8">
+     
           {/* Kartu Atur Password (Hanya muncul jika user baru login via invite) */}
           <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border-l-4 border-yellow-400">
             <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
