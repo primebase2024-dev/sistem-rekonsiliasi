@@ -53,14 +53,37 @@ export function Home() {
     await signOut()
     //navigate('/login')
   }
+  
   async function handleInstall() {
-    if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    if (outcome === 'accepted') {
-      setShowInstallBtn(false)
+    console.log("Tombol Install diklik. deferredPrompt ada?", !!deferredPrompt)
+    
+    if (!deferredPrompt) {
+      console.warn("Gagal: deferredPrompt tidak ditemukan.")
+      alert("Tidak dapat menginstall. \n\n1. Pastikan Anda TIDAK menggunakan mode Incognito.\n2. Aplikasi mungkin sudah terinstall.\n3. Coba refresh halaman dan klik lagi.")
+      return
     }
-    setDeferredPrompt(null)
+
+    try {
+      // 1. Munculkan prompt native browser
+      deferredPrompt.prompt()
+      
+      // 2. Tunggu respon user
+      const { outcome } = await deferredPrompt.userChoice
+      console.log(`Respon user terhadap install: ${outcome}`)
+      
+      if (outcome === 'accepted') {
+        console.log("User menerima install!")
+        setShowInstallBtn(false)
+      } else {
+        console.log("User menolak install.")
+      }
+      
+      // 3. Bersihkan prompt setelah digunakan (hanya bisa dipakai 1x)
+      setDeferredPrompt(null)
+    } catch (err) {
+      console.error("Error saat memunculkan prompt install:", err)
+      alert("Terjadi kesalahan saat mencoba menginstall aplikasi.")
+    }
   }
   
   // --- KONDISI 1: USER BELUM LOGIN (Tampilan Publik) ---
