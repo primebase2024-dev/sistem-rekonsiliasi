@@ -249,77 +249,90 @@ export function Laporan() {
             </div>
           </div>
 
-          {/* REKAPITULASI PER SESI */}
-		<div className="w-full overflow-x-auto pb-4">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-lg font-semibold text-gray-900"> Rekapitulasi per Sesi</h3>
+          {/* 1. REKAPITULASI PER SESI */}
+          <div className="w-full overflow-x-auto pb-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 className="text-lg font-semibold text-gray-900">Rekapitulasi per Sesi</h3>
+              </div>
+              <table className="min-w-[600px] divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Sesi</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Mendaftar</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Dilayani</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tingkat Pelayanan</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {rekap.perSesi.length === 0 ? (
+                    <tr><td colSpan={4} className="px-6 py-4 text-center text-gray-500">Tidak ada data untuk filter ini</td></tr>
+                  ) : (
+                    rekap.perSesi.map((item, idx) => (
+                      <tr key={idx}>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.name}</td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{item.daftar}</td>
+                        <td className="px-6 py-4 text-sm text-green-600 font-bold">{item.dilayani}</td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{item.daftar > 0 ? Math.round((item.dilayani / item.daftar) * 100) : 0}%</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-            <table className="min-w-[600px] divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Sesi</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Mendaftar</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Dilayani</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tingkat Pelayanan</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {rekap.perSesi.length === 0 ? <tr><td colSpan={4} className="px-6 py-4 text-center text-gray-500">Tidak ada data untuk filter ini</td></tr> : 
-                  rekap.perSesi.map((item, idx) => (
-                    <tr key={idx}>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.name}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{item.daftar}</td>
-                      <td className="px-6 py-4 text-sm text-green-600 font-bold">{item.dilayani}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{item.daftar > 0 ? Math.round((item.dilayani / item.daftar) * 100) : 0}%</td>
-                    </tr>
-                  ))
-                }
-              </tbody>
-            </table>
           </div>
-		</div>
-		
-		<div className="w-full overflow-x-auto pb-4">
+          
+          {/* 2. GRID UNTUK TANGGAL & ROMO */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                <h3 className="text-lg font-semibold text-gray-900">📅 Dilayani per Tanggal</h3>
+            
+            {/* DILAYANI PER TANGGAL */}
+            <div className="w-full overflow-x-auto pb-4">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200"> {/* <-- HAPUS overflow-hidden DI SINI */}
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <h3 className="text-lg font-semibold text-gray-900">📅 Dilayani per Tanggal</h3>
+                </div>
+                <table className="min-w-[400px] divide-y divide-gray-200">
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {rekap.perTanggal.length === 0 ? (
+                      <tr><td className="px-6 py-4 text-center text-gray-500">Belum ada jemaat yang selesai dilayani</td></tr>
+                    ) : (
+                      rekap.perTanggal.map((item, idx) => (
+                        <tr key={idx}>
+                          {/* Tambahkan whitespace-nowrap agar teks tidak turun ke bawah */}
+                          <td className="px-6 py-3 text-sm text-gray-700 whitespace-nowrap">{item.name}</td>
+                          <td className="px-6 py-3 text-sm font-bold text-green-600 text-right whitespace-nowrap">{item.count} Jemaat</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
-              <table className="min-w-[600px] divide-y divide-gray-200">
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {rekap.perTanggal.length === 0 ? <tr><td className="px-6 py-4 text-center text-gray-500">Belum ada jemaat yang selesai dilayani</td></tr> : 
-                    rekap.perTanggal.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="px-6 py-3 text-sm text-gray-700">{item.name}</td>
-                        <td className="px-6 py-3 text-sm font-bold text-green-600 text-right">{item.count} Jemaat</td>
-                      </tr>
-                    ))
-                  }
-                </tbody>
-              </table>
             </div>
-		</div>
-		<div className="w-full overflow-x-auto pb-4">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                <h3 className="text-lg font-semibold text-gray-900">✝️ Dilayani per Romo</h3>
+
+            {/* DILAYANI PER ROMO */}
+            <div className="w-full overflow-x-auto pb-4">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200"> {/* <-- HAPUS overflow-hidden DI SINI */}
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <h3 className="text-lg font-semibold text-gray-900">✝️ Dilayani per Romo</h3>
+                </div>
+                <table className="min-w-[400px] divide-y divide-gray-200">
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {rekap.perRomo.length === 0 ? (
+                      <tr><td className="px-6 py-4 text-center text-gray-500">Belum ada data Romo</td></tr>
+                    ) : (
+                      rekap.perRomo.map((item, idx) => (
+                        <tr key={idx}>
+                          <td className="px-6 py-3 text-sm text-gray-700 whitespace-nowrap">{item.name}</td>
+                          <td className="px-6 py-3 text-sm font-bold text-blue-600 text-right whitespace-nowrap">{item.count} Jemaat</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
-              <table className="min-w-[600px] divide-y divide-gray-200">
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {rekap.perRomo.length === 0 ? <tr><td className="px-6 py-4 text-center text-gray-500">Belum ada data Romo</td></tr> : 
-                    rekap.perRomo.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="px-6 py-3 text-sm text-gray-700">{item.name}</td>
-                        <td className="px-6 py-3 text-sm font-bold text-blue-600 text-right">{item.count} Jemaat</td>
-                      </tr>
-                    ))
-                  }
-                </tbody>
-              </table>
             </div>
-		</div>
-          </div>
+
+          </div> {/* Tutup Grid */}
         </>
       )}
     </div>
