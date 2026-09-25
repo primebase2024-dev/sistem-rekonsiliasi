@@ -42,6 +42,7 @@ export function RuangDashboard() {
 
   const selectedRuangRef = useRef<Ruang | null>(null)
 
+
   useEffect(() => {
     selectedRuangRef.current = selectedRuang
   }, [selectedRuang])
@@ -311,7 +312,8 @@ export function RuangDashboard() {
                   <span className="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{allocatedList.length} orang</span>
                 </div>
                 {allocatedList.length > 0 ? (
-                  <div className="space-y-3">
+				<div className="w-full overflow-x-auto pb-4">
+                  <div className="min-w-[600px] space-y-3">
                     {allocatedList.map((p) => (
                       <div key={p.id_peserta} className="flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm hover:shadow-md transition-all">
                         <div className="flex items-center gap-3 flex-1">
@@ -330,6 +332,7 @@ export function RuangDashboard() {
                       </div>
                     ))}
                   </div>
+				</div>
                 ) : (
                   <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-8 text-center text-gray-400 mb-4">Belum ada peserta dialokasikan.</div>
                 )}

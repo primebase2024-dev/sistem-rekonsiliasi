@@ -84,7 +84,7 @@ export function PekanList() {
   if (loading) return <div className="text-center py-10">Memuat data...</div>
 
   return (
-    <div className="space-y-6">
+  <div className="space-y-6">
       <div className="flex justify-between items-center">
         <p className="text-gray-600">Kelola periode pekan rekonsiliasi.</p>
         <button
@@ -166,6 +166,8 @@ export function PekanList() {
         </form>
       )}
 
+	{/* LAPISAN 1: Wrapper untuk Scroll Horizontal */}
+	<div className="w-full overflow-x-auto pb-4">	  
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -218,6 +220,7 @@ export function PekanList() {
           </tbody>
         </table>
       </div>
-    </div>
+	</div>
+  </div>
   )
 }
