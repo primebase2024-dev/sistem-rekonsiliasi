@@ -28,7 +28,8 @@ export function PintuDashboard() {
 
   async function fetchOpenSesi() {
     setLoading(true)
-    // Ambil sesi yang statusnya OPEN, join dengan nama paroki
+    
+    // 1. AMANKAN DENGAN TENANT_ID
     const { data, error } = await supabase
       .from('rekonsiliasi_sesi')
       .select(`
@@ -36,25 +37,29 @@ export function PintuDashboard() {
         rekonsiliasi_pekan (nama_paroki)
       `)
       .eq('status', 'OPEN')
+      .eq('tenant_id', profile?.tenant_id) // <--- KUNCI PENGAMAN TAMBAHKAN DI SINI
       .order('tanggal', { ascending: true })
 
-	if (error) console.error('Error fetch sesi:', error)
-	else {
-	  // Flatten data agar sesuai dengan interface Sesi
-	  const flattenedData = (data || []).map((item: any) => ({
-		id_sesi: item.id_sesi,
-		sesi: item.sesi,
-		jam_mulai: item.jam_mulai,
-		jam_selesai: item.jam_selesai,
-		nomor_terakhir: item.nomor_terakhir,
-		nama_paroki: item.rekonsiliasi_pekan?.[0]?.nama_paroki || 'Paroki' // Ambil dari array
-	  }))
-	  setSesiList(flattenedData)
-	  
-	  if (flattenedData.length > 0 && !selectedSesiId) {
-		setSelectedSesiId(flattenedData[0].id_sesi)
-	  }
-	}
+    if (error) {
+      console.error('Error fetch sesi:', error)
+    } else {
+      // Flatten data agar sesuai dengan interface Sesi
+      const flattenedData = (data || []).map((item: any) => ({
+        id_sesi: item.id_sesi,
+        sesi: item.sesi,
+        jam_mulai: item.jam_mulai,
+        jam_selesai: item.jam_selesai,
+        nomor_terakhir: item.nomor_terakhir,
+        // 2. PERBAIKAN: Hapus [0] karena relasi ini mengembalikan Objek, bukan Array
+        nama_paroki: item.rekonsiliasi_pekan?.nama_paroki || 'Paroki' 
+      }))
+      
+      setSesiList(flattenedData)
+      
+      if (flattenedData.length > 0 && !selectedSesiId) {
+        setSelectedSesiId(flattenedData[0].id_sesi)
+      }
+    }
     setLoading(false)
   }
 

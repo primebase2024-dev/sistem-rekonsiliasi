@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../contexts/AuthContext'
+import { useSearchParams } from 'react-router-dom'
 
 interface Peserta {
- id_peserta: string
- nomor_antrian: number
- status: string
- id_ruang?: string
+  id_peserta: string
+  nomor_antrian: number
+  status: string
+  id_ruang?: string
 }
 
 interface Ruang {
@@ -18,7 +18,11 @@ interface Ruang {
 }
 
 export function Display() {
-  useAuth()
+  const [searchParams] = useSearchParams()
+  const displayTenantId = searchParams.get('tenant_id') 
+     
+  // HAPUS: const { profile } = useAuth() (Tidak dipakai di Display publik)
+  
   const [infoSesi, setInfoSesi] = useState({ nama_paroki: '', sesi: '', hari: '', tanggal: '', jam_mulai: '', jam_selesai: '' })
   const [ruangList, setRuangList] = useState<Ruang[]>([])
   const [deferredList, setDeferredList] = useState<Peserta[]>([])
@@ -31,28 +35,45 @@ export function Display() {
   }, [])
 
   useEffect(() => {
-    fetchData()
-    const channel = setupRealtime()
-    return () => { supabase.removeChannel(channel) }
+    fetchData() 
+    const intervalId = setInterval(() => {
+      console.log("Auto-refresh data antrian...")
+      fetchData()
+    }, 10000)
+    return () => clearInterval(intervalId)
   }, [])
 
   async function fetchData() {
-    const { data: sesiData } = await supabase
+    if (!displayTenantId) {
+      console.error("Tenant ID tidak ditemukan di URL!")
+      return
+    }
+
+    const { data: sesiData, error } = await supabase
       .from('rekonsiliasi_sesi')
       .select('id_sesi, hari, tanggal, jam_mulai, jam_selesai, rekonsiliasi_pekan(nama_paroki, nama_pekan)')
       .eq('status', 'OPEN')
+      .eq('tenant_id', displayTenantId)
       .limit(1)
       .maybeSingle()
 
+    if (error) {
+      console.error("Error fetching sesi:", error)
+      return
+    }
+
     if (sesiData) {
-		setInfoSesi({
-		  nama_paroki: sesiData.rekonsiliasi_pekan?.[0]?.nama_paroki || 'Paroki',
-		  sesi: (sesiData.rekonsiliasi_pekan?.[0]?.nama_pekan || 'Sesi') + ' - ' + sesiData.hari,
-		  hari: sesiData.hari || '',
-		  tanggal: sesiData.tanggal || '',
-		  jam_mulai: sesiData.jam_mulai || '',
-		  jam_selesai: sesiData.jam_selesai || ''
-		})
+      // PERBAIKAN: Casting ke 'any' dan pakai [0] agar TypeScript tidak error
+      const pekanData = (sesiData.rekonsiliasi_pekan as any)?.[0]
+
+      setInfoSesi({
+        nama_paroki: pekanData?.nama_paroki || 'Paroki',
+        sesi: (pekanData?.nama_pekan || 'Sesi') + ' - ' + sesiData.hari,
+        hari: sesiData.hari || '',
+        tanggal: sesiData.tanggal || '',
+        jam_mulai: sesiData.jam_mulai || '',
+        jam_selesai: sesiData.jam_selesai || ''
+      })
 
       const { count } = await supabase
         .from('rekonsiliasi_peserta')
@@ -68,7 +89,8 @@ export function Display() {
         .order('nomor_ruang', { ascending: true })
 
       if (ruangData && ruangData.length > 0) {
-        const ruangIds = ruangData.map(r => r.id_ruang)
+        // PERBAIKAN: Tambahkan (r: any)
+        const ruangIds = ruangData.map((r: any) => r.id_ruang)
         
         const { data: pesertaData } = await supabase
           .from('rekonsiliasi_peserta')
@@ -77,42 +99,29 @@ export function Display() {
           .in('status', ['ALLOCATED', 'CALLED', 'SERVING'])
           .order('nomor_antrian', { ascending: true })
 
-		
-		const { data: deferData } = await supabase
-		  .from('rekonsiliasi_peserta')
-		  .select('id_peserta, nomor_antrian, status, id_ruang')
-		  .in('id_ruang', ruangIds)
-		  .eq('status', 'DEFERRED')
-		  .eq('deferred_ready', true)
-		  .order('nomor_antrian', { ascending: true })
+        const { data: deferData } = await supabase
+          .from('rekonsiliasi_peserta')
+          .select('id_peserta, nomor_antrian, status, id_ruang')
+          .in('id_ruang', ruangIds)
+          .eq('status', 'DEFERRED')
+          .eq('deferred_ready', true)
+          .order('nomor_antrian', { ascending: true })
 
-        const mappedRuang: Ruang[] = ruangData.map(r => ({
+        // PERBAIKAN: Tambahkan (r: any) dan (p: any)
+        const mappedRuang: Ruang[] = ruangData.map((r: any) => ({
           ...r,
-          peserta: (pesertaData || []).filter(p => p.id_ruang === r.id_ruang)
+          peserta: (pesertaData || []).filter((p: any) => p.id_ruang === r.id_ruang)
         }))
 
         setRuangList(mappedRuang)
         setDeferredList(deferData || [])
       } else {
+        setInfoSesi({ nama_paroki: 'Belum Ada Sesi', sesi: '', hari: '', tanggal: '', jam_mulai: '', jam_selesai: '' })
+        setTotalWaiting(0)
         setRuangList([])
         setDeferredList([])
       }
-    } else {
-      setInfoSesi({ nama_paroki: 'Belum Ada Sesi', sesi: '', hari: '', tanggal: '', jam_mulai: '', jam_selesai: '' })
-      setTotalWaiting(0)
-      setRuangList([])
-      setDeferredList([])
     }
-  }
-
-  function setupRealtime() {
-    const channel = supabase
-      .channel('display-peserta-changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'rekonsiliasi_peserta' }, fetchData)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rekonsiliasi_peserta' }, fetchData)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rekonsiliasi_ruang' }, fetchData)
-      .subscribe()
-    return channel
   }
 
   const formatNomor = (nomor: number) => `#${nomor.toString().padStart(3, '0')}`

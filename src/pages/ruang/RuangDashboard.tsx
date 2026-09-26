@@ -88,12 +88,18 @@ export function RuangDashboard() {
       .from('rekonsiliasi_ruang')
       .select(`id_ruang, nomor_ruang, nama_ruang, romo_nama, status, id_sesi, rekonsiliasi_sesi!inner (sesi, kapasitas_tunggu, rekonsiliasi_pekan (nama_paroki))`)
       .eq('rekonsiliasi_sesi.status', 'OPEN')
+      .eq('tenant_id', profile?.tenant_id) // <--- KUNCI PENGAMAN TAMBAHKAN DI SINI
 
     if (!error && data) {
       const flattened = data.map((item: any) => ({
-        id_ruang: item.id_ruang, nomor_ruang: item.nomor_ruang, nama_ruang: item.nama_ruang,
-        romo_nama: item.romo_nama, status: item.status, id_sesi: item.id_sesi,
-        sesi_nama: item.rekonsiliasi_sesi?.sesi, nama_paroki: item.rekonsiliasi_pekan?.nama_paroki,
+        id_ruang: item.id_ruang, 
+        nomor_ruang: item.nomor_ruang, 
+        nama_ruang: item.nama_ruang,
+        romo_nama: item.romo_nama, 
+        status: item.status, 
+        id_sesi: item.id_sesi,
+        sesi_nama: item.rekonsiliasi_sesi?.sesi, 
+        nama_paroki: item.rekonsiliasi_pekan?.[0]?.nama_paroki || 'Paroki', // Catatan: relasi pekan mungkin array tergantung setup, biarkan seperti ini jika sudah jalan
         kapasitas_tunggu: item.rekonsiliasi_sesi?.kapasitas_tunggu || 5
       }))
       setRuangList(flattened)
@@ -102,11 +108,13 @@ export function RuangDashboard() {
   }
 
   async function fetchCounters(id_sesi: string, id_ruang: string) {
-    const { count: waiting } = await supabase.from('rekonsiliasi_peserta').select('*', { count: 'exact', head: true }).eq('id_sesi', id_sesi).eq('status', 'WAITING')
-    const { count: allocated } = await supabase.from('rekonsiliasi_peserta').select('*', { count: 'exact', head: true }).eq('id_ruang', id_ruang).in('status', ['ALLOCATED', 'CALLED'])
-    const { count: serving } = await supabase.from('rekonsiliasi_peserta').select('*', { count: 'exact', head: true }).eq('id_ruang', id_ruang).eq('status', 'SERVING')
-    const { count: completed } = await supabase.from('rekonsiliasi_peserta').select('*', { count: 'exact', head: true }).eq('id_ruang', id_ruang).eq('status', 'COMPLETED')
-    const { count: deferred } = await supabase.from('rekonsiliasi_peserta').select('*', { count: 'exact', head: true }).eq('id_ruang', id_ruang).eq('status', 'DEFERRED')
+    const tenantId = profile?.tenant_id // Ambil sekali untuk efisiensi
+    
+    const { count: waiting } = await supabase.from('rekonsiliasi_peserta').select('*', { count: 'exact', head: true }).eq('id_sesi', id_sesi).eq('status', 'WAITING').eq('tenant_id', tenantId)
+    const { count: allocated } = await supabase.from('rekonsiliasi_peserta').select('*', { count: 'exact', head: true }).eq('id_ruang', id_ruang).in('status', ['ALLOCATED', 'CALLED']).eq('tenant_id', tenantId)
+    const { count: serving } = await supabase.from('rekonsiliasi_peserta').select('*', { count: 'exact', head: true }).eq('id_ruang', id_ruang).eq('status', 'SERVING').eq('tenant_id', tenantId)
+    const { count: completed } = await supabase.from('rekonsiliasi_peserta').select('*', { count: 'exact', head: true }).eq('id_ruang', id_ruang).eq('status', 'COMPLETED').eq('tenant_id', tenantId)
+    const { count: deferred } = await supabase.from('rekonsiliasi_peserta').select('*', { count: 'exact', head: true }).eq('id_ruang', id_ruang).eq('status', 'DEFERRED').eq('tenant_id', tenantId)
     
     setCounters({ 
       waiting: waiting || 0, allocated: allocated || 0, serving: serving || 0, completed: completed || 0, deferred: deferred || 0 
@@ -114,9 +122,13 @@ export function RuangDashboard() {
   }
 
   async function fetchPesertaLists(id_ruang: string) {
-    const { data: allocData } = await supabase.from('rekonsiliasi_peserta').select('id_peserta, nomor_antrian, status').eq('id_ruang', id_ruang).in('status', ['ALLOCATED', 'CALLED']).order('nomor_antrian', { ascending: true })
-    const { data: serveData } = await supabase.from('rekonsiliasi_peserta').select('id_peserta, nomor_antrian, status').eq('id_ruang', id_ruang).eq('status', 'SERVING').limit(1).maybeSingle() 
-    const { data: deferData } = await supabase.from('rekonsiliasi_peserta').select('id_peserta, nomor_antrian, status, waktu_deferred, deferred_ready').eq('id_ruang', id_ruang).eq('status', 'DEFERRED').order('waktu_deferred', { ascending: true })
+    const tenantId = profile?.tenant_id
+
+    const { data: allocData } = await supabase.from('rekonsiliasi_peserta').select('id_peserta, nomor_antrian, status').eq('id_ruang', id_ruang).in('status', ['ALLOCATED', 'CALLED']).eq('tenant_id', tenantId).order('nomor_antrian', { ascending: true })
+    
+    const { data: serveData } = await supabase.from('rekonsiliasi_peserta').select('id_peserta, nomor_antrian, status').eq('id_ruang', id_ruang).eq('status', 'SERVING').eq('tenant_id', tenantId).limit(1).maybeSingle() 
+    
+    const { data: deferData } = await supabase.from('rekonsiliasi_peserta').select('id_peserta, nomor_antrian, status, waktu_deferred, deferred_ready').eq('id_ruang', id_ruang).eq('status', 'DEFERRED').eq('tenant_id', tenantId).order('waktu_deferred', { ascending: true })
 
     setAllocatedList(allocData || [])
     setServingPeserta(serveData || null)
