@@ -277,7 +277,7 @@ export function RuangDashboard() {
               <CounterCard label="WAITING" value={counters.waiting} color="gray" />
               <CounterCard label="ALLOCATED" value={counters.allocated} color="blue" />
               <CounterCard label="SERVING" value={counters.serving} color="green" />
-              <CounterCard label="DEFERRED" value={counters.deferred} color="yellow" />
+              <CounterCard label="DITUNDA" value={counters.deferred} color="yellow" />
               <CounterCard label="SELESAI" value={counters.completed} color="indigo" />
             </div>
 
@@ -339,7 +339,7 @@ export function RuangDashboard() {
                           {p.status === 'ALLOCATED' && (
                             <button onClick={() => handleCall(p)} disabled={processing} className="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold rounded-lg text-sm transition-all active:scale-95">PANGGIL</button>
                           )}
-                          <button onClick={() => handleDefer(p)} disabled={processing} className="px-3 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold rounded-lg text-sm transition-all active:scale-95">DEFER</button>
+                          <button onClick={() => handleDefer(p)} disabled={processing} className="px-3 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold rounded-lg text-sm transition-all active:scale-95">TUNDA</button>
                         </div>
                       </div>
                     ))}
@@ -362,7 +362,7 @@ export function RuangDashboard() {
               {/* DEFERRED */}
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Deferred (Tunda)</h4>
+				  <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Ditunda (Menunggu Kembali)</h4>
                   <span className="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{deferredList.length} orang</span>
                 </div>
                 {deferredList.length > 0 ? (
@@ -374,13 +374,13 @@ export function RuangDashboard() {
                           {p.deferred_ready && <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-bold flex items-center gap-1">✓ SIAP</span>}
                         </div>
                         <button onClick={() => handleReturnDeferred(p)} disabled={p.deferred_ready || processing} className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold rounded-lg text-sm transition-all active:scale-95">
-                          {p.deferred_ready ? 'SUDAH KEMBALI' : 'KEMBALIKAN'}
+                          {p.deferred_ready ? 'SUDAH SIAP' : 'PANGGIL KEMBALI'}
                         </button>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-400 text-sm">Tidak ada peserta deferred.</div>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-400 text-sm">Tidak ada peserta yang ditunda.</div>
                 )}
               </div>
 

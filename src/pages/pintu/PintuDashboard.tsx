@@ -158,7 +158,7 @@ export function PintuDashboard() {
         {/* Info Kapasitas (Placeholder untuk Phase 6) */}
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-center">
           <p className="text-sm text-blue-800">
-            Sistem siap menerima jemaat.
+            Sistem siap menerima umat.
           </p>
         </div>
 
