@@ -182,16 +182,16 @@ export function UserManagement() {
             <h3 className="text-lg font-semibold text-yellow-800">Menunggu Pendaftaran ({invites.length})</h3>
           </div>
           <div className="overflow-x-auto">
-			<table className="min-w-[600px] divide-y divide-gray-200">  
+            <table className="min-w-[700px] divide-y divide-gray-200">  
               <thead className="bg-gray-50">
-				<thead className="bg-gray-50">
-				  <tr>
-					<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Lengkap</th>
-					<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-					<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-				  </tr>
-				</thead>
-			  </thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Lengkap</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                </tr>
+              </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {invites.map((inv) => (
                   <tr key={inv.id}>
