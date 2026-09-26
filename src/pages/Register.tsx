@@ -3,13 +3,13 @@ import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext' 
 
-
 export function Register() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({ full_name: '', email: '', password: '' })
-  const [message, setMessage] = useState('')
+  
+  // HAPUS: const [message, setMessage] = useState('') karena kita pakai alert
 
   useEffect(() => {
     if (user) {
@@ -17,27 +17,57 @@ export function Register() {
     }
   }, [user, navigate])
 
+  // Fungsi untuk mengecek apakah email punya undangan aktif
+  async function checkInvitation(emailToCheck: string) {
+    const { data, error } = await supabase
+      .from('user_invites')
+      .select('*')
+      .eq('email', emailToCheck)
+      .eq('status', 'PENDING')
+      .maybeSingle() // Aman, tidak akan error jika data tidak ditemukan
+
+    if (error) {
+      console.error("Gagal mengecek undangan:", error)
+      return null
+    }
+    return data // Mengembalikan data undangan jika ada, atau null jika tidak ada
+  }
+
   async function handleRegister(e: FormEvent) {
     e.preventDefault()
     setLoading(true)
-    setMessage('')
 
+    // LANGKAH 1: CEK UNDANGAN DULU SEBELUM REGISTER
+    const invite = await checkInvitation(formData.email)
+    
+    if (!invite) {
+      // BLOKIR PROSES DI SINI!
+      alert('❌ Email ini tidak memiliki undangan aktif.\n\nSilakan hubungi Admin Paroki untuk mendapatkan undangan terlebih dahulu.')
+      setLoading(false)
+      return // Hentikan eksekusi, jangan lanjut ke Supabase Auth
+    }
+
+    // LANGKAH 2: JIKA UNDANGAN ADA, LANJUTKAN REGISTER
+    // PERBAIKAN: Hanya ambil 'error', buang 'data' agar tidak error TS6133
     const { error } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
       options: {
         data: {
-          full_name: formData.full_name
+          full_name: formData.full_name,
+          tenant_id: invite.tenant_id, // <--- AMBIL DARI DATA UNDANGAN
+          role: invite.role            // <--- AMBIL DARI DATA UNDANGAN
         }
       }
     })
 
     if (error) {
-      setMessage(`❌ Error: ${error.message}`)
+      alert('Gagal mendaftar: ' + error.message)
     } else {
-      setMessage('✅ Pendaftaran berhasil! Silakan login.')
-      setTimeout(() => navigate('/login'), 2000)
+      alert('✅ Registrasi berhasil! Silakan login.')
+      navigate('/login')
     }
+    
     setLoading(false)
   }
 
@@ -50,11 +80,7 @@ export function Register() {
           <p className="text-sm text-gray-500 mt-1">Gunakan email yang telah diundang oleh Admin</p>
         </div>
 
-        {message && (
-          <div className={`p-3 rounded-lg text-sm text-center ${message.includes('❌') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
-            {message}
-          </div>
-        )}
+        {/* HAPUS: Blok message karena kita sudah pakai alert() */}
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>

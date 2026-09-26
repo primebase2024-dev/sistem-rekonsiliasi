@@ -37,25 +37,39 @@ export function UserManagement() {
     }
   }, [profile])
 
-  async function fetchData() {
-    setLoading(true)
-    const { data: usersData } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, role')
-      .eq('tenant_id', profile?.tenant_id)
-      .order('full_name')
+async function fetchData() {
+  setLoading(true)
+  
+  // 1. Ambil user aktif
+  const { data: usersData, error: usersError } = await supabase
+    .from('profiles')
+    .select('id, full_name, role')
+    .eq('tenant_id', profile?.tenant_id)
+    .order('full_name')
 
-    const { data: invitesData } = await supabase
-      .from('user_invites')
-      .select('*')
-      .eq('tenant_id', profile?.tenant_id)
-      .eq('status', 'PENDING')
-      .order('created_at', { ascending: false })
-
-    setUsers(usersData || [])
-    setInvites(invitesData || [])
-    setLoading(false)
+  if (usersError) {
+    console.error('Error fetching users:', usersError)
   }
+
+  // 2. Ambil undangan pending
+  const { data: invitesData, error: invitesError } = await supabase
+    .from('user_invites')
+    .select('*')
+    .eq('tenant_id', profile?.tenant_id)
+    .eq('status', 'PENDING')
+    .order('created_at', { ascending: false })
+
+  if (invitesError) {
+    console.error('Error fetching invites:', invitesError)
+  }
+
+  console.log('Users:', usersData)
+  console.log('Invites:', invitesData)
+
+  setUsers(usersData || [])
+  setInvites(invitesData || [])
+  setLoading(false)
+}
 
   async function handleInvite(e: FormEvent) {
     e.preventDefault()
