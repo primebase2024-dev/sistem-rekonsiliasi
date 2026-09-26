@@ -38,12 +38,34 @@ export function Login() {
     setLoading(false)
   }
 
-  // Mode 2: Kirim Magic Link (Untuk user undangan yang belum set password / lupa password)
+  // Mode 2: Kirim Magic Link (Dengan Validasi Keamanan)
   async function handleMagicLink(e: FormEvent) {
     e.preventDefault()
     setLoading(true)
     setMessage('')
 
+    // LANGKAH 1: CEK APAKAH EMAIL TERDAFTAR DI SISTEM (sebagai user aktif atau undangan pending)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', formData.email)
+      .maybeSingle()
+
+    const { data: invite } = await supabase
+      .from('user_invites')
+      .select('id')
+      .eq('email', formData.email)
+      .eq('status', 'PENDING')
+      .maybeSingle()
+
+    // JIKA EMAIL TIDAK DIKETAHUI DI SISTEM, TOLAK
+    if (!profile && !invite) {
+      setMessage('❌ Email ini tidak terdaftar di sistem.\n\nSilakan hubungi Admin Paroki untuk mendapatkan undangan terlebih dahulu.')
+      setLoading(false)
+      return // Hentikan eksekusi, jangan kirim Magic Link
+    }
+
+    // LANGKAH 2: JIKA EMAIL VALID, KIRIM MAGIC LINK
     const { error } = await supabase.auth.signInWithOtp({
       email: formData.email,
       options: {
@@ -153,7 +175,7 @@ export function Login() {
         )}
 
         <div className="text-center text-sm text-gray-600 pt-2 border-t">
-          Belum punya akun? Hubungi Administrator Paroki Harapan Indah untuk diundang.
+          Belum punya akun? Hubungi Administrator Paroki untuk diundang.
         </div>
       </div>
     </div>
