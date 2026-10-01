@@ -25,11 +25,12 @@ export function UserManagement() {
   const [loading, setLoading] = useState(true)
   const [showInviteForm, setShowInviteForm] = useState(false)
   
-  // State untuk loading tombol
   const [inviteLoading, setInviteLoading] = useState(false)
-  
-  // State form dengan full_name
   const [inviteData, setInviteData] = useState({ full_name: '', email: '', role: 'PETUGAS_PINTU' })
+  
+  // State untuk menyimpan pesan lengkap yang akan di-copy
+  const [inviteResult, setInviteResult] = useState<string | null>(null)
+  const [copyStatus, setCopyStatus] = useState('')
 
   useEffect(() => {
     if (profile?.tenant_id) {
@@ -37,68 +38,77 @@ export function UserManagement() {
     }
   }, [profile])
 
-async function fetchData() {
-  setLoading(true)
-  
-  // 1. Ambil user aktif
-  const { data: usersData, error: usersError } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, role') 
-    .eq('tenant_id', profile?.tenant_id)
-    .order('full_name')
+  async function fetchData() {
+    setLoading(true)
+    
+    const { data: usersData, error: usersError } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, role') 
+      .eq('tenant_id', profile?.tenant_id)
+      .order('full_name')
 
-  if (usersError) {
-    console.error('Error fetching users:', usersError)
+    if (usersError) console.error('Error fetching users:', usersError)
+
+    const { data: invitesData, error: invitesError } = await supabase
+      .from('user_invites')
+      .select('*')
+      .eq('tenant_id', profile?.tenant_id)
+      .eq('status', 'PENDING')
+      .order('created_at', { ascending: false })
+
+    if (invitesError) console.error('Error fetching invites:', invitesError)
+
+    setUsers(usersData || [])
+    setInvites(invitesData || [])
+    setLoading(false)
   }
-
-  // 2. Ambil undangan pending
-  const { data: invitesData, error: invitesError } = await supabase
-    .from('user_invites')
-    .select('*')
-    .eq('tenant_id', profile?.tenant_id)
-    .eq('status', 'PENDING')
-    .order('created_at', { ascending: false })
-
-  if (invitesError) {
-    console.error('Error fetching invites:', invitesError)
-  }
-
-  console.log('Users:', usersData)
-  console.log('Invites:', invitesData)
-
-  setUsers(usersData || [])
-  setInvites(invitesData || [])
-  setLoading(false)
-}
 
   async function handleInvite(e: FormEvent) {
     e.preventDefault()
     if (!profile?.tenant_id) return
 
-    setInviteLoading(true) // Aktifkan loading
+    setInviteLoading(true)
+    setInviteResult(null) // Reset hasil sebelumnya
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('invite-user', {
-        body: {
+      const { error: dbError } = await supabase
+        .from('user_invites')
+        .insert({
           email: inviteData.email,
           full_name: inviteData.full_name,
           role: inviteData.role,
-          tenant_id: profile.tenant_id
-        }
-      })
+          tenant_id: profile.tenant_id,
+          status: 'PENDING'
+        })
 
-      if (fnError) throw new Error(fnError.message)
-      if (!data.success) throw new Error(data.error)
+      if (dbError) throw new Error(dbError.message)
 
-      alert(`✅ Undangan berhasil!\n\nEmail otomatis telah dikirim ke ${inviteData.email}.\nMereka tinggal klik link di email untuk mendaftar.`)
+      // 1. Buat Link Pendaftaran
+      const registerUrl = `${window.location.origin}/register`
 
-      setShowInviteForm(false)
+      // 2. BUAT PESAN LENGKAP DI SINI (Tempat meletakkan variabel message)
+      const message = `Salve  *${inviteData.full_name}*,\n\nAnda diundang untuk menjadi *${inviteData.role}* di Sistem Antrian Rekonsiliasi.\n\nSilakan lakukan pendaftaran menggunakan email ini: \n *${inviteData.email}*\n\nLink Pendaftaran:\n*${registerUrl}*\n\n Selamat melayani. Berkah Dalem. `
+
+      // 3. Simpan pesan ke state untuk ditampilkan di UI
+      setInviteResult(message)
+
+      // 4. Otomatis salin PESAN LENGKAP ke clipboard
+      try {
+        await navigator.clipboard.writeText(message)
+        setCopyStatus('Pesan Tersalin!')
+        setTimeout(() => setCopyStatus(''), 2000)
+      } catch (err) {
+        console.log('Gagal auto-copy, user bisa klik tombol salin manual.')
+      }
+
+      // Reset form
       setInviteData({ full_name: '', email: '', role: 'PETUGAS_PINTU' })
       fetchData()
+      
     } catch (err: any) {
       alert('Gagal: ' + err.message)
     } finally {
-      setInviteLoading(false) // Matikan loading setelah selesai
+      setInviteLoading(false)
     }
   }
 
@@ -108,6 +118,12 @@ async function fetchData() {
     fetchData()
   }
 
+  function handleCopyLink(text: string) {
+    navigator.clipboard.writeText(text)
+    setCopyStatus('Pesan Tersalin!')
+    setTimeout(() => setCopyStatus(''), 2000)
+  }
+
   if (loading) return <div className="text-center py-10 text-gray-500">Memuat data...</div>
 
   return (
@@ -115,7 +131,7 @@ async function fetchData() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Kelola User & Undangan</h2>
         <button
-          onClick={() => setShowInviteForm(!showInviteForm)}
+          onClick={() => { setShowInviteForm(!showInviteForm); setInviteResult(null) }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition"
         >
           {showInviteForm ? 'Batal' : '+ Undang User Baru'}
@@ -123,10 +139,40 @@ async function fetchData() {
       </div>
 
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 text-sm text-blue-700">
-        <strong>Cara Kerja:</strong> Masukkan Nama Lengkap dan Email petugas di sini. Sistem akan mengirim email undangan. Petugas tinggal klik link di email tersebut untuk menyelesaikan pendaftaran dengan Role dan Paroki yang sudah diatur otomatis.
+        <strong>Cara Kerja:</strong> Masukkan Nama dan Email petugas. Sistem akan menyimpan data undangan dan menyalin <strong>Pesan Undangan Lengkap</strong> ke clipboard Anda. Anda tinggal menempel (paste) pesan tersebut ke WhatsApp petugas.
       </div>
 
-      {showInviteForm && (
+      {/* KOTAK HASIL UNDANGAN (Menampilkan Pesan Lengkap) */}
+      {inviteResult && (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-6 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="text-3xl">✅</div>
+            <div>
+              <h3 className="text-lg font-bold text-green-900">Undangan Berhasil Disimpan!</h3>
+              <p className="text-sm text-green-700 mt-1">Pesan di bawah ini telah otomatis disalin. Silakan tempel (paste) di WhatsApp.</p>
+            </div>
+          </div>
+          
+          {/* Tampilan Pesan yang akan di-copy */}
+          <div className="bg-white border border-green-300 rounded-lg p-4 shadow-sm">
+            <p className="text-sm text-gray-800 whitespace-pre-wrap font-sans leading-relaxed">
+              {inviteResult}
+            </p>
+          </div>
+
+          <div className="flex justify-end">
+            <button 
+              onClick={() => handleCopyLink(inviteResult)}
+              className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition flex items-center gap-2"
+            >
+              📋 {copyStatus || 'Salin Pesan'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* FORM UNDANGAN */}
+      {showInviteForm && !inviteResult && (
         <form onSubmit={handleInvite} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">Form Undangan Petugas</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -170,11 +216,10 @@ async function fetchData() {
           </div>
           
           <div className="flex justify-end pt-2">
-            {/* PERBAIKAN: String className sekarang utuh dalam 1 baris */}
             <button 
               type="submit" 
               disabled={inviteLoading}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 min-w-[160px]"
+              className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 min-w-[200px]"
             >
               {inviteLoading ? (
                 <>
@@ -182,14 +227,15 @@ async function fetchData() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Mengirim Email...
+                  Memproses...
                 </>
-              ) : 'Buat Undangan'}
+              ) : '💾 Simpan & Salin Pesan'}
             </button>
           </div>
         </form>
       )}
 
+      {/* TABEL UNDANGAN PENDING */}
       {invites.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200 bg-yellow-50">
@@ -226,17 +272,17 @@ async function fetchData() {
         </div>
       )}
 
+      {/* TABEL PETUGAS AKTIF */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Petugas Aktif di Paroki Ini</h3>
         </div>
         <div className="overflow-x-auto">
-          {/* PERBESAR min-w agar 3 kolom muat dengan rapi di HP/Desktop */}
           <table className="min-w-[700px] divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Lengkap</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th> {/* ✅ DITAMBAHKAN */}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
               </tr>
             </thead>
@@ -252,7 +298,7 @@ async function fetchData() {
                       {u.full_name || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {u.email || '-'} {/* ✅ DITAMBAHKAN */}
+                      {u.email || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${

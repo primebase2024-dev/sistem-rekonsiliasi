@@ -6,7 +6,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 // Check if credentials are configured
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(
-    '??  SUPABASE CREDENTIALS NOT CONFIGURED\n' +
+    '⚠️  SUPABASE CREDENTIALS NOT CONFIGURED\n' +
     'Please create a .env file with:\n' +
     'VITE_SUPABASE_URL=your-project-url\n' +
     'VITE_SUPABASE_ANON_KEY=your-anon-key\n' +
