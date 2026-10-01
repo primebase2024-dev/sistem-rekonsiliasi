@@ -29,7 +29,6 @@ export function UserManagement() {
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteData, setInviteData] = useState({ full_name: '', email: '', role: 'PETUGAS_PINTU' })
   
-  // State untuk menyimpan pesan lengkap yang akan di-copy
   const [inviteResult, setInviteResult] = useState<string | null>(null)
   const [copyStatus, setCopyStatus] = useState('')
 
@@ -42,6 +41,7 @@ export function UserManagement() {
   async function fetchData() {
     setLoading(true)
     
+    // 1. Ambil user aktif (untuk dicocokkan dengan invited_by nanti)
     const { data: usersData, error: usersError } = await supabase
       .from('profiles')
       .select('id, full_name, email, role') 
@@ -50,9 +50,10 @@ export function UserManagement() {
 
     if (usersError) console.error('Error fetching users:', usersError)
 
+    // 2. Ambil undangan (TANPA join yang error, cukup ambil semua kolom *)
     const { data: invitesData, error: invitesError } = await supabase
       .from('user_invites')
-      .select('*, profiles!invited_by(full_name)')
+      .select('*') 
       .eq('tenant_id', profile?.tenant_id)
       .eq('status', 'PENDING')
       .order('created_at', { ascending: false })
@@ -64,12 +65,19 @@ export function UserManagement() {
     setLoading(false)
   }
 
+  // FUNGSI BANTU: Mencari nama pengundang berdasarkan ID
+  function getInviterName(inviterId: string | undefined) {
+    if (!inviterId) return 'Sistem / Data Lama'
+    const inviter = users.find(u => u.id === inviterId)
+    return inviter ? inviter.full_name : 'Admin (ID tidak dikenal)'
+  }
+
   async function handleInvite(e: FormEvent) {
     e.preventDefault()
     if (!profile?.tenant_id) return
 
     setInviteLoading(true)
-    setInviteResult(null) // Reset hasil sebelumnya
+    setInviteResult(null)
 
     try {
       const { error: dbError } = await supabase
@@ -79,31 +87,25 @@ export function UserManagement() {
           full_name: inviteData.full_name,
           role: inviteData.role,
           tenant_id: profile.tenant_id,
-          invited_by: profile.id, // <--- TAMBAHKAN INI (ID Admin yang mengundang)
+          invited_by: profile.id, // ID Admin yang sedang login
           status: 'PENDING'
         })
 
       if (dbError) throw new Error(dbError.message)
 
-      // 1. Buat Link Pendaftaran
       const registerUrl = `${window.location.origin}/register`
+      const message = `Salve *${inviteData.full_name}*,\n\nAnda diundang untuk menjadi *${inviteData.role}* di Sistem Antrian Rekonsiliasi.\n\nSilakan lakukan pendaftaran menggunakan email ini: \n *${inviteData.email}*\n\nLink Pendaftaran:\n*${registerUrl}*\n\n Selamat melayani. Berkah Dalem.`
 
-      // 2. BUAT PESAN LENGKAP DI SINI (Tempat meletakkan variabel message)
-      const message = `Salve  *${inviteData.full_name}*,\n\nAnda diundang untuk menjadi *${inviteData.role}* di Sistem Antrian Rekonsiliasi.\n\nSilakan lakukan pendaftaran menggunakan email ini: \n *${inviteData.email}*\n\nLink Pendaftaran:\n*${registerUrl}*\n\n Selamat melayani. Berkah Dalem. `
-
-      // 3. Simpan pesan ke state untuk ditampilkan di UI
       setInviteResult(message)
 
-      // 4. Otomatis salin PESAN LENGKAP ke clipboard
       try {
         await navigator.clipboard.writeText(message)
         setCopyStatus('Pesan Tersalin!')
         setTimeout(() => setCopyStatus(''), 2000)
       } catch (err) {
-        console.log('Gagal auto-copy, user bisa klik tombol salin manual.')
+        console.log('Gagal auto-copy')
       }
 
-      // Reset form
       setInviteData({ full_name: '', email: '', role: 'PETUGAS_PINTU' })
       fetchData()
       
@@ -141,10 +143,9 @@ export function UserManagement() {
       </div>
 
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 text-sm text-blue-700">
-        <strong>Cara Kerja:</strong> Masukkan Nama dan Email petugas. Sistem akan menyimpan data undangan dan menyalin <strong>Pesan Undangan Lengkap</strong> ke clipboard Anda. Anda tinggal menempel (paste) pesan tersebut ke WhatsApp petugas.
+        <strong>Cara Kerja:</strong> Masukkan Nama dan Email petugas. Sistem akan menyimpan data undangan dan menyalin <strong>Pesan Undangan Lengkap</strong> ke clipboard Anda.
       </div>
 
-      {/* KOTAK HASIL UNDANGAN (Menampilkan Pesan Lengkap) */}
       {inviteResult && (
         <div className="bg-green-50 border border-green-200 rounded-xl p-6 space-y-4">
           <div className="flex items-start gap-3">
@@ -154,14 +155,11 @@ export function UserManagement() {
               <p className="text-sm text-green-700 mt-1">Pesan di bawah ini telah otomatis disalin. Silakan tempel (paste) di WhatsApp.</p>
             </div>
           </div>
-          
-          {/* Tampilan Pesan yang akan di-copy */}
           <div className="bg-white border border-green-300 rounded-lg p-4 shadow-sm">
             <p className="text-sm text-gray-800 whitespace-pre-wrap font-sans leading-relaxed">
               {inviteResult}
             </p>
           </div>
-
           <div className="flex justify-end">
             <button 
               onClick={() => handleCopyLink(inviteResult)}
@@ -173,7 +171,6 @@ export function UserManagement() {
         </div>
       )}
 
-      {/* FORM UNDANGAN */}
       {showInviteForm && !inviteResult && (
         <form onSubmit={handleInvite} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">Form Undangan Petugas</h3>
@@ -181,27 +178,23 @@ export function UserManagement() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap Petugas <span className="text-red-500">*</span></label>
               <input
-                required
-                type="text"
+                required type="text"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
                 placeholder="Contoh: Budi Santoso"
                 value={inviteData.full_name}
                 onChange={e => setInviteData({...inviteData, full_name: e.target.value})}
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Alamat Email <span className="text-red-500">*</span></label>
               <input
-                required
-                type="email"
+                required type="email"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
                 placeholder="contoh: budi@paroki.com"
                 value={inviteData.email}
                 onChange={e => setInviteData({...inviteData, email: e.target.value})}
               />
             </div>
-
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Role / Peran</label>
               <select
@@ -216,42 +209,31 @@ export function UserManagement() {
               </select>
             </div>
           </div>
-          
           <div className="flex justify-end pt-2">
             <button 
-              type="submit" 
-              disabled={inviteLoading}
+              type="submit" disabled={inviteLoading}
               className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 min-w-[200px]"
             >
-              {inviteLoading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Memproses...
-                </>
-              ) : '💾 Simpan & Salin Pesan'}
+              {inviteLoading ? 'Memproses...' : '💾 Simpan & Salin Pesan'}
             </button>
           </div>
         </form>
       )}
 
-      {/* TABEL UNDANGAN PENDING */}
       {invites.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200 bg-yellow-50">
             <h3 className="text-lg font-semibold text-yellow-800">Menunggu Pendaftaran ({invites.length})</h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-[700px] divide-y divide-gray-200">  
+            <table className="min-w-[800px] divide-y divide-gray-200">  
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Lengkap</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
-				  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Diundang Oleh</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Diundang Oleh</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                 </tr>
               </thead>
@@ -264,8 +246,12 @@ export function UserManagement() {
                       <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">{inv.role}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(inv.created_at).toLocaleDateString('id-ID')}</td>
-					<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {(inv as any).profiles?.full_name || '-'}
-					</td>
+                    
+                    {/* PERBAIKAN: Gunakan fungsi helper untuk mencari nama */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
+                      {getInviterName(inv.invited_by)}
+                    </td>
+                    
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <button onClick={() => deleteInvite(inv.id)} className="text-red-600 hover:text-red-900 font-medium">Batalkan</button>
                     </td>
@@ -277,7 +263,6 @@ export function UserManagement() {
         </div>
       )}
 
-      {/* TABEL PETUGAS AKTIF */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Petugas Aktif di Paroki Ini</h3>
@@ -293,18 +278,12 @@ export function UserManagement() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {users.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-gray-500">Belum ada user aktif.</td>
-                </tr>
+                <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-500">Belum ada user aktif.</td></tr>
               ) : (
                 users.map((u) => (
                   <tr key={u.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {u.full_name || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {u.email || '-'}
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{u.full_name || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.email || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                         u.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
