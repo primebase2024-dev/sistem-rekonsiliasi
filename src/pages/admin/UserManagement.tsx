@@ -16,6 +16,7 @@ interface Invite {
   role: string
   status: string
   created_at: string
+  invited_by?: string
 }
 
 export function UserManagement() {
@@ -51,7 +52,7 @@ export function UserManagement() {
 
     const { data: invitesData, error: invitesError } = await supabase
       .from('user_invites')
-      .select('*')
+      .select('*, profiles!invited_by(full_name)')
       .eq('tenant_id', profile?.tenant_id)
       .eq('status', 'PENDING')
       .order('created_at', { ascending: false })
@@ -78,6 +79,7 @@ export function UserManagement() {
           full_name: inviteData.full_name,
           role: inviteData.role,
           tenant_id: profile.tenant_id,
+          invited_by: profile.id, // <--- TAMBAHKAN INI (ID Admin yang mengundang)
           status: 'PENDING'
         })
 
@@ -249,6 +251,7 @@ export function UserManagement() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+				  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Diundang Oleh</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                 </tr>
               </thead>
@@ -261,6 +264,8 @@ export function UserManagement() {
                       <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">{inv.role}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(inv.created_at).toLocaleDateString('id-ID')}</td>
+					<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {(inv as any).profiles?.full_name || '-'}
+					</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <button onClick={() => deleteInvite(inv.id)} className="text-red-600 hover:text-red-900 font-medium">Batalkan</button>
                     </td>
