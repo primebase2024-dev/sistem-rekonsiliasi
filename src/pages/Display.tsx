@@ -203,10 +203,10 @@ export function Display() {
           <p className="text-sm text-slate-300">{formatTanggal(infoSesi.tanggal)} | {infoSesi.jam_mulai} - {infoSesi.jam_selesai} WIB</p>
         </div>
         <div className="text-right">
-          <p className="text-5xl font-mono font-bold text-white">
+          <p className="text-3xl font-mono font-bold text-white">
             {currentTime.toLocaleTimeString('id-ID')}
           </p>
-          <p className="text-sm text-slate-500 mt-1">Sisa Antrian: <span className="text-yellow-400 font-bold">{totalWaiting}</span></p>
+          <p className="text-sm text-slate-500 mt-1">Sisa Antrian: <span className="text-yellow-500 font-bold">{totalWaiting}</span></p>
         </div>
       </header>
 
