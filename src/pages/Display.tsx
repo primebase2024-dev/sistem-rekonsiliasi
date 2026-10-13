@@ -196,19 +196,29 @@ export function Display() {
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col overflow-hidden font-sans">
       {/* PERUBAHAN #1: Header lebih compact */}
-      <header className="bg-slate-800 border-b-2 border-indigo-600 px-6 py-3 flex justify-between items-center shadow-lg">
-        <div>
-          <h1 className="text-3xl font-bold text-indigo-400">SISTEM ANTRIAN REKONSILIASI</h1>
-          <p className="text-lg text-slate-300">{infoSesi.nama_paroki} • {infoSesi.sesi}</p>
-          <p className="text-sm text-slate-300">{formatTanggal(infoSesi.tanggal)} | {infoSesi.jam_mulai} - {infoSesi.jam_selesai} WIB</p>
-        </div>
-        <div className="text-right">
-          <p className="text-3xl font-mono font-bold text-white">
-            {currentTime.toLocaleTimeString('id-ID')}
-          </p>
-          <p className="text-sm text-slate-500 mt-1">Sisa Antrian: <span className="text-yellow-500 font-bold">{totalWaiting}</span></p>
-        </div>
-      </header>
+		<header className="bg-slate-800 border-b-2 border-indigo-600 px-6 py-4 flex justify-between items-center shadow-lg">
+		  <div>
+			<h1 className="text-3xl font-bold text-indigo-400">SISTEM ANTRIAN REKONSILIASI</h1>
+			<p className="text-lg text-slate-300">{infoSesi.nama_paroki} • {infoSesi.sesi}</p>
+			<p className="text-sm text-slate-400">{formatTanggal(infoSesi.tanggal)} | {infoSesi.jam_mulai} - {infoSesi.jam_selesai} WIB</p>
+		  </div>
+		  
+		  <div className="text-right">
+			{/* 1. WAKTU: Diperkecil dari text-3xl menjadi text-2xl, warna sedikit diredam agar tidak mendominasi */}
+			<p className="text-2xl font-mono font-semibold text-slate-300 tracking-wider">
+			  {currentTime.toLocaleTimeString('id-ID')}
+			</p>
+			
+			{/* 2. SISA ANTRIAN: Diperbesar drastis dan dibuat sejajar (baseline) agar rapi */}
+			<div className="mt-2 flex items-baseline justify-end gap-2">
+			  <span className="text-lg text-slate-400 font-medium">Sisa Antrian:</span>
+			  <span className="text-5xl font-extrabold text-yellow-400 drop-shadow-md">
+				{totalWaiting}
+			  </span>
+			  <span className="text-lg text-slate-400 font-medium">Orang</span>
+			</div>
+		  </div>
+		</header>
 
       <main className="flex-1 p-4 flex gap-4 overflow-hidden relative">
         {errorMessage && (
@@ -223,15 +233,10 @@ export function Display() {
         {!errorMessage && (
           <>
             {/* PERUBAHAN #2: Grid responsif untuk handle 8 ruang */}
-			<div
-			  className={`flex-1 grid grid-auto-rows-fr gap-3 overflow-y-auto pr-2 ${
-				ruangList.length > 4
-				  ? 'grid-cols-3'
-				  : ruangList.length > 2
-					? 'grid-cols-2'
-					: 'grid-cols-1'
-			  }`}
-			>
+            <div className={`flex-1 grid gap-3 overflow-y-auto pr-2 ${
+              ruangList.length > 4 ? 'grid-cols-3' : 
+              ruangList.length > 2 ? 'grid-cols-2' : 'grid-cols-1'
+            }`}>
               {ruangList.length === 0 ? (
                 <div className="col-span-full flex items-center justify-center h-48 text-slate-500 text-xl">
                   {infoSesi.nama_paroki === 'Belum Ada Sesi' ? 'Belum ada sesi yang dibuka.' : 'Belum ada ruang aktif.'}
