@@ -223,10 +223,15 @@ export function Display() {
         {!errorMessage && (
           <>
             {/* PERUBAHAN #2: Grid responsif untuk handle 8 ruang */}
-            <div className={`flex-1 grid gap-3 overflow-y-auto pr-2 ${
-              ruangList.length > 4 ? 'grid-cols-3' : 
-              ruangList.length > 2 ? 'grid-cols-2' : 'grid-cols-1'
-            }`}>
+			<div
+			  className={`flex-1 grid grid-auto-rows-fr gap-3 overflow-y-auto pr-2 ${
+				ruangList.length > 4
+				  ? 'grid-cols-3'
+				  : ruangList.length > 2
+					? 'grid-cols-2'
+					: 'grid-cols-1'
+			  }`}
+			>
               {ruangList.length === 0 ? (
                 <div className="col-span-full flex items-center justify-center h-48 text-slate-500 text-xl">
                   {infoSesi.nama_paroki === 'Belum Ada Sesi' ? 'Belum ada sesi yang dibuka.' : 'Belum ada ruang aktif.'}
@@ -337,7 +342,7 @@ export function Display() {
 
       <footer className="bg-indigo-900 text-white py-2 overflow-hidden">
         <div className="whitespace-nowrap animate-marquee text-sm font-medium">
-          Harap mempersiapkan hati dan menjaga ketenangan. • Pastikan nomor antrian Anda sudah terpanggil sebelum memasuki ruang. • Tuhan memberkati.
+          Silentium Sacrum • Harap mempersiapkan hati dan menjaga ketenangan. • Pastikan nomor antrian Anda sudah terpanggil sebelum memasuki ruang. • Tuhan memberkati.
         </div>
       </footer>
     </div>
