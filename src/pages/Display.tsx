@@ -200,13 +200,13 @@ export function Display() {
         <div>
           <h1 className="text-3xl font-bold text-indigo-400">SISTEM ANTRIAN REKONSILIASI</h1>
           <p className="text-lg text-slate-300">{infoSesi.nama_paroki} • {infoSesi.sesi}</p>
-          <p className="text-sm text-slate-500">{formatTanggal(infoSesi.tanggal)} | {infoSesi.jam_mulai} - {infoSesi.jam_selesai} WIB</p>
+          <p className="text-sm text-slate-300">{formatTanggal(infoSesi.tanggal)} | {infoSesi.jam_mulai} - {infoSesi.jam_selesai} WIB</p>
         </div>
         <div className="text-right">
           <p className="text-5xl font-mono font-bold text-white">
             {currentTime.toLocaleTimeString('id-ID')}
           </p>
-          <p className="text-sm text-slate-400 mt-1">Sisa Antrian: <span className="text-yellow-400 font-bold">{totalWaiting}</span></p>
+          <p className="text-sm text-slate-500 mt-1">Sisa Antrian: <span className="text-yellow-400 font-bold">{totalWaiting}</span></p>
         </div>
       </header>
 
