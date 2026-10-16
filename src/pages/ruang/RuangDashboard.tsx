@@ -267,8 +267,7 @@ async function fetchPesertaLists(id_ruang: string) {
     navigate('/') 
   }
   
-  const formatNomor = (nomor: number) => `#${nomor.toString().padStart(3, '0')}`
-
+const formatNomor = (nomor: number) => `#${nomor.toString().padStart(3, '0')}`
   if (loading) return <div className="min-h-screen flex items-center justify-center text-indigo-600 font-medium">Memuat data ruang...</div>
 
   return (
