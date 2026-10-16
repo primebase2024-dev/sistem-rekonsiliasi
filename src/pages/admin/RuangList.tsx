@@ -115,6 +115,7 @@ export function RuangList() {
     }
   }
 
+  // FUNGSI BARU: Mengubah Status Ruang (READY/PAUSE/OFFLINE)
   async function handleStatusChange(id_ruang: string, newStatus: string) {
     try {
       const { error } = await supabase.rpc('rpc_update_ruang_status', {
@@ -128,6 +129,27 @@ export function RuangList() {
     }
   }
 
+  // FUNGSI BARU: Mengubah Tipe Ruang (Umum/Prioritas)
+  async function handleTypeChange(id_ruang: string, isPriority: boolean) {
+    try {
+      const { error } = await supabase
+        .from('rekonsiliasi_ruang')
+        .update({ is_priority_room: isPriority })
+        .eq('id_ruang', id_ruang)
+        
+      if (error) throw error
+      
+      // Update state lokal agar UI langsung berubah tanpa refresh penuh
+      setRuangList(prev => prev.map(r => 
+        r.id_ruang === id_ruang ? { ...r, is_priority_room: isPriority } : r
+      ))
+    } catch (err: any) {
+      alert('Gagal mengubah tipe ruang: ' + err.message)
+      // Revert jika gagal (opsional)
+      if (selectedSesiId) fetchRuang(selectedSesiId)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -137,7 +159,7 @@ export function RuangList() {
             onClick={() => { if (selectedSesiId) fetchRuang(selectedSesiId); }}
             className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition"
           >
-            🔄 Refresh Data
+             Refresh Data
           </button>
           <button
             onClick={() => {
@@ -242,17 +264,23 @@ export function RuangList() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{ruang.nama_ruang}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ruang.romo_nama}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ruang.petugas_nama}</td>
+                    
+                    {/* KOLOM TIPE RUANG: Sekarang bisa diubah langsung via Dropdown */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {ruang.is_priority_room ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
-                          ⭐ Prioritas
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                          Umum
-                        </span>
-                      )}
+                      <select
+                        value={ruang.is_priority_room ? 'priority' : 'normal'}
+                        onChange={(e) => handleTypeChange(ruang.id_ruang, e.target.value === 'priority')}
+                        className={`text-xs font-semibold rounded-full px-3 py-1.5 border-0 outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500 ${
+                          ruang.is_priority_room 
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                            : 'bg-gray-100 text-gray-600 border border-gray-200'
+                        }`}
+                      >
+                        <option value="normal">Umum</option>
+                        <option value="priority">⭐ Prioritas</option>
+                      </select>
                     </td>
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <select
                         value={ruang.status}
