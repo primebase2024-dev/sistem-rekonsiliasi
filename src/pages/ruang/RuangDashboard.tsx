@@ -18,6 +18,8 @@ interface Ruang {
 interface Peserta {
   id_peserta: string
   nomor_antrian: number
+  prefix?: string          // TAMBAHKAN INI
+  is_priority?: boolean    // TAMBAHKAN INI
   status: string
   waktu_deferred?: string
   deferred_ready?: boolean
@@ -121,19 +123,42 @@ export function RuangDashboard() {
     })
   }
 
-  async function fetchPesertaLists(id_ruang: string) {
-    const tenantId = profile?.tenant_id
+async function fetchPesertaLists(id_ruang: string) {
+  const tenantId = profile?.tenant_id
 
-    const { data: allocData } = await supabase.from('rekonsiliasi_peserta').select('id_peserta, nomor_antrian, status').eq('id_ruang', id_ruang).in('status', ['ALLOCATED', 'CALLED']).eq('tenant_id', tenantId).order('nomor_antrian', { ascending: true })
-    
-    const { data: serveData } = await supabase.from('rekonsiliasi_peserta').select('id_peserta, nomor_antrian, status').eq('id_ruang', id_ruang).eq('status', 'SERVING').eq('tenant_id', tenantId).limit(1).maybeSingle() 
-    
-    const { data: deferData } = await supabase.from('rekonsiliasi_peserta').select('id_peserta, nomor_antrian, status, waktu_deferred, deferred_ready').eq('id_ruang', id_ruang).eq('status', 'DEFERRED').eq('tenant_id', tenantId).order('waktu_deferred', { ascending: true })
+  // ALLOCATED - tambahkan prefix dan is_priority
+  const { data: allocData } = await supabase
+    .from('rekonsiliasi_peserta')
+    .select('id_peserta, nomor_antrian, prefix, is_priority, status')
+    .eq('id_ruang', id_ruang)
+    .in('status', ['ALLOCATED', 'CALLED'])
+    .eq('tenant_id', tenantId)
+    .order('is_priority', { ascending: false })  // P dulu
+    .order('nomor_antrian', { ascending: true })  // Lalu nomor
 
-    setAllocatedList(allocData || [])
-    setServingPeserta(serveData || null)
-    setDeferredList(deferData || [])
-  }
+  // SERVING - tambahkan prefix dan is_priority  
+  const { data: serveData } = await supabase
+    .from('rekonsiliasi_peserta')
+    .select('id_peserta, nomor_antrian, prefix, is_priority, status')
+    .eq('id_ruang', id_ruang)
+    .eq('status', 'SERVING')
+    .eq('tenant_id', tenantId)
+    .limit(1)
+    .maybeSingle()
+
+  // DEFERRED - tambahkan prefix dan is_priority
+  const { data: deferData } = await supabase
+    .from('rekonsiliasi_peserta')
+    .select('id_peserta, nomor_antrian, prefix, is_priority, status, waktu_deferred, deferred_ready')
+    .eq('id_ruang', id_ruang)
+    .eq('status', 'DEFERRED')
+    .eq('tenant_id', tenantId)
+    .order('waktu_deferred', { ascending: true })
+
+  setAllocatedList(allocData || [])
+  setServingPeserta(serveData || null)
+  setDeferredList(deferData || [])
+}
 
   async function handleNextAllocated() {
     if (!selectedRuang) return
@@ -309,7 +334,9 @@ export function RuangDashboard() {
                     >
                       ↩ Batal
                     </button>
-                    <p className="text-6xl font-extrabold text-green-700 mb-6">{formatNomor(servingPeserta.nomor_antrian)}</p>
+                    <p className="text-6xl font-extrabold text-green-700 mb-6">
+					{formatNomor(servingPeserta.nomor_antrian, servingPeserta.prefix)}
+					</p>
                     <button onClick={handleSelesai} disabled={processing} className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold text-lg py-3 rounded-lg shadow-sm transition-all active:scale-[0.98]">✓ SELESAI</button>
                   </div>
                 ) : (
@@ -332,7 +359,9 @@ export function RuangDashboard() {
                           <span className={`px-3 py-1 text-xs font-bold rounded-full ${p.status === 'CALLED' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>
                             {p.status === 'CALLED' ? 'DIPANGGIL' : 'MENUNGGU'}
                           </span>
-                          <span className="text-2xl font-extrabold text-gray-900">{formatNomor(p.nomor_antrian)}</span>
+                          <span className="text-2xl font-extrabold text-gray-900">
+							{formatNomor(p.nomor_antrian, p.prefix)}
+						  </span>
                         </div>
                         <div className="flex gap-2">
                           <button onClick={() => handlePesertaMasuk(p)} disabled={processing || !!servingPeserta} className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold rounded-lg text-sm transition-all active:scale-95">MASUK</button>
@@ -370,7 +399,9 @@ export function RuangDashboard() {
                     {deferredList.map((p) => (
                       <div key={p.id_peserta} className="flex items-center justify-between bg-yellow-50 border border-yellow-200 rounded-lg p-3 transition-all hover:bg-yellow-100">
                         <div className="flex items-center gap-3">
-                          <span className="text-xl font-bold text-yellow-800">{formatNomor(p.nomor_antrian)}</span>
+                          <span className="text-xl font-bold text-yellow-800">
+							{formatNomor(p.nomor_antrian, p.prefix)}
+						  </span>
                           {p.deferred_ready && <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-bold flex items-center gap-1">✓ SIAP</span>}
                         </div>
                         <button onClick={() => handleReturnDeferred(p)} disabled={p.deferred_ready || processing} className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold rounded-lg text-sm transition-all active:scale-95">
