@@ -267,6 +267,7 @@ async function fetchPesertaLists(id_ruang: string) {
     navigate('/') 
   }
   
+// GANTI MENJADI INI (Kode Baru)
 const formatNomor = (nomor: number, prefix?: string) => {
   const p = prefix || 'A'
   return `${p}-${nomor.toString().padStart(3, '0')}`
